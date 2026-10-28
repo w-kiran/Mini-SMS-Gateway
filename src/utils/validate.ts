@@ -1,22 +1,5 @@
-import { Response } from "express";
 import { z } from "zod";
-
-// An error we throw on purpose, with an HTTP status and a short code
-export class AppError extends Error {
-  constructor(
-    public status: number,
-    public code: string,
-    message: string,
-    public details?: unknown,
-  ) {
-    super(message);
-  }
-}
-
-// Send a success response in our standard format
-export function ok(res: Response, data: unknown, status = 200) {
-  res.status(status).json({ success: true, data });
-}
+import { AppError } from "./errors";
 
 // Check data against a zod schema.
 // Returns the clean data, or throws a 400 error listing what is wrong.
