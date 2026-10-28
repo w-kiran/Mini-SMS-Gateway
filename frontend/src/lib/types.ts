@@ -27,8 +27,10 @@ export interface LogsPage {
 }
 
 export interface RouteHealth {
+  id: string;
   name: string;
   priority: number;
+  active: boolean;
   balance: number;
   totalAttempts: number;
   successful: number;

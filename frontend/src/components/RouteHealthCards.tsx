@@ -2,13 +2,15 @@
 
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchRouteHealth } from "@/store/slices/healthSlice";
+import { fetchRouteHealth, toggleRouteActive } from "@/store/slices/healthSlice";
 import { formatNumber, formatRate } from "@/lib/format";
 import type { RouteHealth } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { Badge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
+import { Switch } from "@/components/ui/Switch";
 
 function healthTone(health: number): string {
   if (health >= 90) return "text-emerald-300";
@@ -16,7 +18,9 @@ function healthTone(health: number): string {
   return "text-rose-300";
 }
 
-function RouteCard({ route }: { route: RouteHealth }) {
+function RouteCard({ route, toggling }: { route: RouteHealth; toggling: boolean }) {
+  const dispatch = useAppDispatch();
+
   return (
     <Card>
       <div className="flex items-start justify-between">
@@ -46,6 +50,24 @@ function RouteCard({ route }: { route: RouteHealth }) {
         <dt className="text-slate-400">Failed</dt>
         <dd className="text-right font-medium text-rose-300">{formatNumber(route.failed)}</dd>
       </dl>
+
+      <div className="mt-4 flex items-center justify-between border-t border-slate-800 pt-4">
+        <Badge
+          className={
+            route.active
+              ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-300"
+              : "border-rose-500/30 bg-rose-500/15 text-rose-300"
+          }
+        >
+          {route.active ? "Active" : "Inactive"}
+        </Badge>
+        <Switch
+          checked={route.active}
+          disabled={toggling}
+          label={`Toggle ${route.name}`}
+          onChange={(next) => dispatch(toggleRouteActive({ id: route.id, active: next }))}
+        />
+      </div>
     </Card>
   );
 }
@@ -55,6 +77,7 @@ export function RouteHealthCards() {
   const routes = useAppSelector((state) => state.health.routes);
   const status = useAppSelector((state) => state.health.status);
   const error = useAppSelector((state) => state.health.error);
+  const togglingId = useAppSelector((state) => state.health.togglingId);
 
   useEffect(() => {
     dispatch(fetchRouteHealth());
@@ -73,7 +96,7 @@ export function RouteHealthCards() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {routes.map((route) => (
-          <RouteCard key={route.name} route={route} />
+          <RouteCard key={route.id} route={route} toggling={togglingId === route.id} />
         ))}
       </div>
 

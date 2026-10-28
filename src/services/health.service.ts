@@ -1,5 +1,6 @@
 import { prisma } from "../db/prisma";
 import { getBalance } from "../providers/mock.provider";
+import { appError } from "../utils/errors";
 
 export async function getRouteHealth() {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000); // last 24 hours
@@ -18,8 +19,10 @@ export async function getRouteHealth() {
     const health = balance === 0 ? 0 : (successRate ?? 100);
 
     routes.push({
+      id: provider.id,
       name: provider.name,
       priority: provider.priority,
+      active: provider.failureRate < 1,
       balance,
       totalAttempts: total,
       successful,
@@ -30,4 +33,18 @@ export async function getRouteHealth() {
   }
 
   return { routes };
+}
+
+// Force a route to always succeed (active, failureRate 0) or always fail
+// (inactive, failureRate 1), so failover and refunds can be demonstrated.
+export async function setRouteActive(id: string, active: boolean) {
+  const provider = await prisma.provider.findUnique({ where: { id } });
+  if (!provider) throw appError(404, "ROUTE_NOT_FOUND", "Route not found");
+
+  const updated = await prisma.provider.update({
+    where: { id },
+    data: { failureRate: active ? 0 : 1 },
+  });
+
+  return { id: updated.id, name: updated.name, active: updated.failureRate < 1 };
 }
