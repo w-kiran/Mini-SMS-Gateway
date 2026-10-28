@@ -1,15 +1,15 @@
 import { NextFunction, Request, Response } from "express";
-import { AppError } from "../utils/errors";
+import { appError } from "../utils/errors";
 
 // Unknown route -> JSON 404
 export function notFound(_req: Request, _res: Response, next: NextFunction) {
-  next(new AppError(404, "NOT_FOUND", "Route not found"));
+  next(appError(404, "NOT_FOUND", "Route not found"));
 }
 
 // Central error handler (it must have exactly 4 parameters)
 export function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction) {
   // errors we threw on purpose
-  if (err instanceof AppError) {
+  if (err?.isAppError) {
     return res.status(err.status).json({
       success: false,
       error: { code: err.code, message: err.message, details: err.details },
