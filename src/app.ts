@@ -1,7 +1,8 @@
 import express from "express";
 import { notFound, errorHandler } from "./middleware/errorHandler";
-import { authRouter } from "./routes/auth.routes";
+import { authRouter } from "./routes/auth.route";
 import { smsRouter } from "./routes/sms.route";
+import { healthRouter } from "./routes/health.route";
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.get("/ping", (_req, res) => {
 
 app.use(authRouter);
 app.use(smsRouter);
+app.use(healthRouter);
 
 // these two must stay last
 app.use(notFound);
