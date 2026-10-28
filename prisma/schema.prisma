@@ -7,3 +7,61 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
+
+enum Status {
+  pending
+  sent
+  failed
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  credits      Int       @default(100)
+  createdAt    DateTime  @default(now())
+  messages     Message[]
+}
+
+model Message {
+  id             String            @id @default(uuid())
+  userId         String
+  to             String
+  body           String
+  encoding       String
+  segments       Int
+  cost           Int
+  status         Status            @default(pending)
+  provider       String?
+  idempotencyKey String?
+  createdAt      DateTime          @default(now())
+  user           User              @relation(fields: [userId], references: [id])
+  attempts       ProviderAttempt[]
+
+  @@unique([userId, idempotencyKey, to])
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@index([userId, to])
+  @@index([status, createdAt])
+}
+
+model Provider {
+  id          String            @id @default(uuid())
+  name        String            @unique
+  priority    Int
+  balance     Int
+  failureRate Float             @default(0)
+  attempts    ProviderAttempt[]
+}
+
+model ProviderAttempt {
+  id         String   @id @default(uuid())
+  messageId  String
+  providerId String
+  success    Boolean
+  createdAt  DateTime @default(now())
+  message    Message  @relation(fields: [messageId], references: [id])
+  provider   Provider @relation(fields: [providerId], references: [id])
+
+  @@index([providerId, createdAt])
+}
